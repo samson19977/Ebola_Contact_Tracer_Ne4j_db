@@ -1,0 +1,30 @@
+{
+  "project": "Ebola Contact Tracer",
+  "version": "2.0.0",
+  "author": "Francis Musoke",
+  "description": "Real-time Ebola outbreak contact tracing system for DRC, Uganda, and Rwanda using Neo4j graph database.",
+  "region": "East & Central Africa",
+  "countries": ["DRC", "Uganda", "Rwanda", "Kenya"],
+  "tech_stack": {
+    "backend": "Python / Flask",
+    "database": "Neo4j AuraDB (Graph)",
+    "driver": "neo4j==5.19.0"
+  },
+  "api_base": "http://localhost:5000",
+  "endpoints": {
+    "stats":           "GET /stats",
+    "infected":        "GET /infected",
+    "at_risk":         "GET /at-risk?degrees=2",
+    "chain":           "GET /chain?from=Name&to=Name",
+    "spread_country":  "GET /spread/country",
+    "spread_city":     "GET /spread/city",
+    "super_spreaders": "GET /super-spreaders",
+    "timeline":        "GET /timeline",
+    "high_risk":       "GET /high-risk-events",
+    "graph":           "GET /graph",
+    "search":          "GET /search?name=...",
+    "mark_infected":   "POST /mark/infected/<id>",
+    "mark_quarantined":"POST /mark/quarantined/<id>",
+    "mark_recovered":  "POST /mark/recovered/<id>"
+  }
+}

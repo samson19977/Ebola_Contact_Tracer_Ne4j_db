@@ -269,3 +269,108 @@ def seed():
 
 if __name__ == "__main__":
     seed()
+
+# ── EXTENDED DATA (Wave 2 – added May 2026) ─────────────────────────────────
+PEOPLE_WAVE2 = [
+    # DRC – Kinshasa (capital spread)
+    {"id":"p61","name":"Adele Nzinga",       "city":"Kinshasa",   "country":"DRC",    "role":"Doctor",         "age":39,"gender":"F"},
+    {"id":"p62","name":"Bernard Tshisekedi",  "city":"Kinshasa",   "country":"DRC",    "role":"Bus Driver",     "age":44,"gender":"M"},
+    {"id":"p63","name":"Claudette Mbaya",     "city":"Kinshasa",   "country":"DRC",    "role":"Nurse",          "age":31,"gender":"F"},
+
+    # Uganda – Gulu cluster (North Uganda)
+    {"id":"p64","name":"Akello Agnes",        "city":"Gulu",       "country":"Uganda", "role":"Midwife",        "age":34,"gender":"F"},
+    {"id":"p65","name":"Ocen Richard",        "city":"Gulu",       "country":"Uganda", "role":"Teacher",        "age":40,"gender":"M"},
+    {"id":"p66","name":"Lamwaka Rose",        "city":"Gulu",       "country":"Uganda", "role":"Farmer",         "age":28,"gender":"F"},
+
+    # Rwanda – Nyamagabe cluster (Southern Rwanda)
+    {"id":"p67","name":"Uwera Vestine",       "city":"Nyamagabe",  "country":"Rwanda", "role":"Health Worker",  "age":26,"gender":"F"},
+    {"id":"p68","name":"Nzabonindaba Jean",   "city":"Nyamagabe",  "country":"Rwanda", "role":"Farmer",         "age":38,"gender":"M"},
+
+    # Tanzania – Bukoba (cross-border risk)
+    {"id":"p69","name":"Mwangi Fatuma",       "city":"Bukoba",     "country":"Tanzania","role":"Trader",        "age":35,"gender":"F"},
+    {"id":"p70","name":"Petro Gaspar",        "city":"Bukoba",     "country":"Tanzania","role":"Fisherman",     "age":42,"gender":"M"},
+]
+
+CONTACTS_WAVE2 = [
+    # Goma → Kinshasa flight
+    ("p05","p62","2025-01-15","Goma Airport",          "DRC",    "High"),
+    ("p62","p61","2025-01-16","Kinshasa N'Djili Hospital","DRC", "High"),
+    ("p61","p63","2025-01-17","Kinshasa University Hospital","DRC","High"),
+
+    # Uganda north spread
+    ("p35","p64","2025-01-22","Mbarara-Gulu Highway",  "Uganda", "Medium"),
+    ("p64","p65","2025-01-23","Gulu Referral Hospital","Uganda", "High"),
+    ("p65","p66","2025-01-24","Gulu Primary School",   "Uganda", "Low"),
+
+    # Rwanda south spread
+    ("p55","p67","2025-01-30","Huye-Nyamagabe Road",   "Rwanda", "Medium"),
+    ("p67","p68","2025-01-31","Nyamagabe Market",       "Rwanda", "Medium"),
+
+    # Rwanda → Tanzania border
+    ("p42","p69","2025-01-29","Rusumo Border Post",     "Border", "High"),
+    ("p69","p70","2025-01-30","Bukoba Fishing Market",  "Tanzania","Medium"),
+]
+
+INFECTED_WAVE2 = ["p61", "p62", "p64"]
+DECEASED_WAVE2 = ["p62"]
+RECOVERED_WAVE2 = ["p64"]
+
+
+def seed_wave2():
+    """Add Wave 2 data on top of existing seeded database."""
+    print("🔗 Connecting to Neo4j AuraDB (Wave 2)...")
+    with driver.session(database=DATABASE) as session:
+        print(f"👤 Adding {len(PEOPLE_WAVE2)} new people (Wave 2)...")
+        for p in PEOPLE_WAVE2:
+            session.run("""
+                MERGE (person:Person {id: $id})
+                SET person.name=$name, person.city=$city,
+                    person.country=$country, person.role=$role,
+                    person.age=$age, person.gender=$gender,
+                    person.infected=false, person.deceased=false,
+                    person.recovered=false, person.quarantined=false
+            """, **p)
+
+        print(f"🤝 Adding {len(CONTACTS_WAVE2)} new contact events (Wave 2)...")
+        for a, b, date, location, country, risk in CONTACTS_WAVE2:
+            session.run("""
+                MATCH (pa:Person {id: $a}), (pb:Person {id: $b})
+                CREATE (pa)-[:MET {date: $date, location: $location, country: $country, risk: $risk}]->(pb)
+                CREATE (pb)-[:MET {date: $date, location: $location, country: $country, risk: $risk}]->(pa)
+            """, a=a, b=b, date=date, location=location, country=country, risk=risk)
+
+        print("🦠 Marking Wave 2 infected...")
+        for pid in INFECTED_WAVE2:
+            session.run("MATCH (p:Person {id: $id}) SET p.infected = true", id=pid)
+
+        print("💀 Marking Wave 2 deceased...")
+        for pid in DECEASED_WAVE2:
+            session.run("MATCH (p:Person {id: $id}) SET p.deceased = true", id=pid)
+
+        print("💚 Marking Wave 2 recovered...")
+        for pid in RECOVERED_WAVE2:
+            session.run("MATCH (p:Person {id: $id}) SET p.infected = false, p.recovered = true", id=pid)
+
+        # Country nodes for new countries
+        for country in ["Tanzania"]:
+            session.run("MERGE (:Country {name: $name})", name=country)
+        for p in PEOPLE_WAVE2:
+            session.run("""
+                MATCH (person:Person {id: $id}), (c:Country {name: $country})
+                MERGE (person)-[:LIVES_IN]->(c)
+            """, id=p["id"], country=p["country"])
+
+    total_people = len(PEOPLE) + len(PEOPLE_WAVE2)
+    total_contacts = len(CONTACTS) + len(CONTACTS_WAVE2)
+    print("\n✅ WAVE 2 SEEDED SUCCESSFULLY!")
+    print(f"   👥 {total_people} total people (DRC, Uganda, Rwanda, Kenya, Tanzania)")
+    print(f"   🤝 {total_contacts} total contact events")
+    driver.close()
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "wave2":
+        seed_wave2()
+    else:
+        seed()

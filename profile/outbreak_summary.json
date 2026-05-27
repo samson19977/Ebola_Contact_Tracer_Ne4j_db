@@ -1,0 +1,44 @@
+{
+  "outbreak": {
+    "name": "Ebola Simulation – East Africa 2025",
+    "patient_zero": {
+      "id": "p01",
+      "name": "Amani Kabila",
+      "city": "Goma",
+      "country": "DRC",
+      "first_contact_date": "2025-01-03"
+    },
+    "timeline": {
+      "day_1":  { "date": "2025-01-03", "event": "Patient Zero (Amani Kabila) contacts Goma hospital nurse" },
+      "day_5":  { "date": "2025-01-07", "event": "Spread to church cluster & bus routes in Goma" },
+      "day_10": { "date": "2025-01-13", "event": "Cross-border spread via Kasindi Border Post into Uganda" },
+      "day_15": { "date": "2025-01-17", "event": "Kampala urban cluster established" },
+      "day_18": { "date": "2025-01-20", "event": "Cross-border spread into Rwanda via Katuna/Rusizi" },
+      "day_22": { "date": "2025-01-25", "event": "Kigali hospital cluster confirmed" },
+      "day_28": { "date": "2025-01-28", "event": "International spread risk (airport contacts)" }
+    },
+    "clusters": [
+      { "location": "Goma, DRC",        "type": "Origin",       "size": 10 },
+      { "location": "Butembo, DRC",     "type": "Secondary",    "size": 5  },
+      { "location": "Beni, DRC",        "type": "Secondary",    "size": 5  },
+      { "location": "Kasese, Uganda",   "type": "Border",       "size": 5  },
+      { "location": "Kampala, Uganda",  "type": "Urban",        "size": 8  },
+      { "location": "Mbarara, Uganda",  "type": "Secondary",    "size": 3  },
+      { "location": "Rubavu, Rwanda",   "type": "Border",       "size": 4  },
+      { "location": "Kigali, Rwanda",   "type": "Urban",        "size": 8  },
+      { "location": "Musanze, Rwanda",  "type": "Secondary",    "size": 4  },
+      { "location": "Huye, Rwanda",     "type": "Secondary",    "size": 3  }
+    ],
+    "statistics": {
+      "total_people": 60,
+      "total_contacts": 100,
+      "confirmed_infected": 8,
+      "deceased": 3,
+      "recovered": 2,
+      "active_cases": 3,
+      "countries_affected": 4,
+      "high_risk_contacts": 28,
+      "border_crossings": 7
+    }
+  }
+}
