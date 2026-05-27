@@ -180,7 +180,7 @@ RETURN p.name, p.city, contacts LIMIT 10
 
 ## 👨‍💻 Author
 
-Built at **African Institute for Mathematical Sciences (AIMS), Kigali, Rwanda**
+Built by **Samson Niyizurugero**
 
 ---
 
