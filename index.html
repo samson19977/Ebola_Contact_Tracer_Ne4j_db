@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ebola Contact Tracer — DRC · Uganda · Rwanda</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --red:     #e63946;
+  --orange:  #f4a261;
+  --yellow:  #e9c46a;
+  --green:   #2a9d8f;
+  --blue:    #457b9d;
+  --dark:    #0a0a0f;
+  --darker:  #050508;
+  --surface: #12121a;
+  --border:  #1e1e2e;
+  --text:    #e8e8f0;
+  --muted:   #6b6b85;
+  --mono:    'Space Mono', monospace;
+  --sans:    'Syne', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--darker);
+  color:var(--text);
+  font-family:var(--sans);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── Animated background ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 10% 20%, rgba(230,57,70,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(42,157,143,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(69,123,157,0.04) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+/* ── Header ── */
+header{
+  position:relative;z-index:10;
+  border-bottom:1px solid var(--border);
+  padding:24px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(10,10,15,0.8);
+  backdrop-filter:blur(20px);
+}
+.logo{display:flex;align-items:center;gap:14px}
+.logo-icon{
+  width:42px;height:42px;
+  background:var(--red);
+  border-radius:8px;
+  display:grid;place-items:center;
+  font-size:22px;
+  box-shadow:0 0 20px rgba(230,57,70,0.4);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 20px rgba(230,57,70,0.4)}50%{box-shadow:0 0 35px rgba(230,57,70,0.7)}}
+.logo-text h1{font-size:18px;font-weight:800;letter-spacing:-0.5px}
+.logo-text p{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase}
+.status-bar{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ── Nav tabs ── */
+nav{
+  position:relative;z-index:10;
+  border-bottom:1px solid var(--border);
+  padding:0 40px;
+  display:flex;gap:0;
+  background:rgba(10,10,15,0.6);
+  backdrop-filter:blur(10px);
+  overflow-x:auto;
+}
+nav button{
+  background:none;border:none;cursor:pointer;
+  color:var(--muted);
+  font-family:var(--mono);font-size:11px;
+  text-transform:uppercase;letter-spacing:1.5px;
+  padding:16px 20px;
+  border-bottom:2px solid transparent;
+  transition:all 0.2s;white-space:nowrap;
+}
+nav button:hover{color:var(--text)}
+nav button.active{color:var(--red);border-bottom-color:var(--red)}
+
+/* ── Main layout ── */
+main{
+  position:relative;z-index:5;
+  max-width:1400px;margin:0 auto;
+  padding:40px;
+}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── Stat cards ── */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:16px;margin-bottom:40px;
+}
+.stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;padding:24px;
+  position:relative;overflow:hidden;
+  transition:transform 0.2s,border-color 0.2s;
+}
+.stat-card:hover{transform:translateY(-2px);border-color:var(--muted)}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+}
+.stat-card.red::before{background:var(--red)}
+.stat-card.orange::before{background:var(--orange)}
+.stat-card.yellow::before{background:var(--yellow)}
+.stat-card.green::before{background:var(--green)}
+.stat-card.blue::before{background:var(--blue)}
+.stat-card.purple::before{background:#7c5cbf}
+.stat-card.pink::before{background:#e91e8c}
+.stat-value{
+  font-size:42px;font-weight:800;line-height:1;
+  font-family:var(--mono);margin-bottom:8px;
+}
+.stat-card.red .stat-value{color:var(--red)}
+.stat-card.orange .stat-value{color:var(--orange)}
+.stat-card.yellow .stat-value{color:var(--yellow)}
+.stat-card.green .stat-value{color:var(--green)}
+.stat-card.blue .stat-value{color:var(--blue)}
+.stat-card.purple .stat-value{color:#7c5cbf}
+.stat-card.pink .stat-value{color:#e91e8c}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-family:var(--mono)}
+
+/* ── Section headers ── */
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;
+}
+.section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-family:var(--mono)}
+
+/* ── Table ── */
+.table-wrap{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;margin-bottom:32px;
+}
+table{width:100%;border-collapse:collapse}
+thead tr{background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border)}
+thead th{
+  padding:14px 20px;text-align:left;
+  font-family:var(--mono);font-size:10px;
+  text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
+}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s}
+tbody tr:hover{background:rgba(255,255,255,0.03)}
+tbody tr:last-child{border-bottom:none}
+td{padding:14px 20px;font-size:13px}
+
+/* ── Badges ── */
+.badge{
+  display:inline-block;padding:3px 10px;border-radius:20px;
+  font-family:var(--mono);font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;
+}
+.badge-red   {background:rgba(230,57,70,0.15);color:var(--red);border:1px solid rgba(230,57,70,0.3)}
+.badge-orange{background:rgba(244,162,97,0.15);color:var(--orange);border:1px solid rgba(244,162,97,0.3)}
+.badge-yellow{background:rgba(233,196,106,0.15);color:var(--yellow);border:1px solid rgba(233,196,106,0.3)}
+.badge-green {background:rgba(42,157,143,0.15);color:var(--green);border:1px solid rgba(42,157,143,0.3)}
+.badge-blue  {background:rgba(69,123,157,0.15);color:var(--blue);border:1px solid rgba(69,123,157,0.3)}
+.badge-gray  {background:rgba(107,107,133,0.15);color:var(--muted);border:1px solid rgba(107,107,133,0.3)}
+
+/* ── Country bars ── */
+.country-grid{display:grid;gap:16px;margin-bottom:32px}
+.country-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;
+}
+.country-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.country-name{font-size:18px;font-weight:700}
+.country-stats{display:flex;gap:24px}
+.country-stat span{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.country-stat strong{font-size:20px;font-weight:800;font-family:var(--mono)}
+.progress-bar{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;margin-top:16px}
+.progress-fill{height:100%;border-radius:3px;transition:width 1s ease}
+
+/* ── Chain visualiser ── */
+.chain-input{
+  display:flex;gap:12px;margin-bottom:24px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;
+}
+.chain-input input{
+  flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  color:var(--text);font-family:var(--mono);font-size:13px;
+  padding:10px 16px;border-radius:8px;outline:none;
+  transition:border-color 0.2s;
+}
+.chain-input input:focus{border-color:var(--red)}
+.chain-input input::placeholder{color:var(--muted)}
+.btn{
+  background:var(--red);color:white;border:none;cursor:pointer;
+  padding:10px 24px;border-radius:8px;font-family:var(--mono);
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  transition:opacity 0.2s,transform 0.1s;
+}
+.btn:hover{opacity:0.85}
+.btn:active{transform:scale(0.97)}
+.btn-green{background:var(--green)}
+.chain-visual{
+  display:flex;align-items:center;flex-wrap:wrap;gap:0;
+  padding:28px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  min-height:80px;
+}
+.chain-node{
+  display:flex;flex-direction:column;align-items:center;
+  background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  border-radius:10px;padding:12px 16px;min-width:120px;text-align:center;
+}
+.chain-node.infected{border-color:var(--red);background:rgba(230,57,70,0.1)}
+.chain-node-name{font-weight:700;font-size:13px;margin-bottom:4px}
+.chain-node-info{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.chain-arrow{font-size:20px;color:var(--muted);padding:0 8px;flex-shrink:0}
+
+/* ── Search ── */
+.search-wrap{
+  display:flex;gap:12px;margin-bottom:24px;
+}
+.search-input{
+  flex:1;background:var(--surface);border:1px solid var(--border);
+  color:var(--text);font-family:var(--mono);font-size:13px;
+  padding:12px 20px;border-radius:10px;outline:none;
+  transition:border-color 0.2s;
+}
+.search-input:focus{border-color:var(--blue)}
+.search-input::placeholder{color:var(--muted)}
+
+/* ── Graph panel ── */
+#graph-canvas{
+  width:100%;height:600px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  position:relative;overflow:hidden;
+}
+#graph-canvas svg{width:100%;height:100%}
+.graph-legend{
+  display:flex;gap:20px;flex-wrap:wrap;
+  padding:16px 20px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;margin-top:16px;
+}
+.legend-item{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* ── Loading ── */
+.loading{
+  display:flex;align-items:center;gap:10px;
+  color:var(--muted);font-family:var(--mono);font-size:12px;padding:40px;
+}
+.spinner{
+  width:18px;height:18px;border:2px solid var(--border);
+  border-top-color:var(--red);border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Empty state ── */
+.empty{padding:60px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:13px}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  header,nav,main{padding-left:20px;padding-right:20px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .chain-input{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🦠</div>
+    <div class="logo-text">
+      <h1>Ebola Contact Tracer</h1>
+      <p>DRC &nbsp;·&nbsp; Uganda &nbsp;·&nbsp; Rwanda</p>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span id="api-status">Connecting...</span>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('dashboard')">Dashboard</button>
+  <button onclick="showTab('infected')">Infected Cases</button>
+  <button onclick="showTab('atrisk')">At Risk</button>
+  <button onclick="showTab('countries')">Country Spread</button>
+  <button onclick="showTab('chain')">Infection Chain</button>
+  <button onclick="showTab('timeline')">Timeline</button>
+  <button onclick="showTab('graph')">Graph View</button>
+  <button onclick="showTab('search')">Search</button>
+</nav>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="tab-panel active">
+    <div id="stats-grid" class="stats-grid">
+      <div class="loading"><div class="spinner"></div>Loading stats...</div>
+    </div>
+    <div class="section-header"><span class="section-title">Super Spreaders</span></div>
+    <div id="super-spreaders-wrap" class="table-wrap">
+      <div class="loading"><div class="spinner"></div>Loading...</div>
+    </div>
+    <div class="section-header"><span class="section-title">Recent High-Risk Contact Events</span></div>
+    <div id="high-risk-wrap" class="table-wrap">
+      <div class="loading"><div class="spinner"></div>Loading...</div>
+    </div>
+  </div>
+
+  <!-- INFECTED -->
+  <div id="tab-infected" class="tab-panel">
+    <div class="section-header"><span class="section-title">Confirmed Ebola Cases</span></div>
+    <div id="infected-wrap" class="table-wrap">
+      <div class="loading"><div class="spinner"></div>Loading...</div>
+    </div>
+  </div>
+
+  <!-- AT RISK -->
+  <div id="tab-atrisk" class="tab-panel">
+    <div class="section-header">
+      <span class="section-title">People At Risk</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="loadAtRisk(1)">1°</button>
+        <button class="btn btn-green" onclick="loadAtRisk(2)">2°</button>
+        <button class="btn" style="background:var(--blue)" onclick="loadAtRisk(3)">3°</button>
+      </div>
+    </div>
+    <div id="atrisk-wrap" class="table-wrap">
+      <div class="loading"><div class="spinner"></div>Loading...</div>
+    </div>
+  </div>
+
+  <!-- COUNTRIES -->
+  <div id="tab-countries" class="tab-panel">
+    <div class="section-header"><span class="section-title">Spread by Country & City</span></div>
+    <div id="country-grid" class="country-grid"></div>
+    <div class="section-header" style="margin-top:8px"><span class="section-title">City Breakdown</span></div>
+    <div id="city-wrap" class="table-wrap"></div>
+  </div>
+
+  <!-- CHAIN -->
+  <div id="tab-chain" class="tab-panel">
+    <div class="section-header"><span class="section-title">Trace Infection Chain</span></div>
+    <div class="chain-input">
+      <input id="chain-from" type="text" placeholder="From (e.g. Amani Kabila)" value="Amani Kabila"/>
+      <input id="chain-to"   type="text" placeholder="To (e.g. Hope Uwase)" value="Hope Uwase"/>
+      <button class="btn" onclick="loadChain()">Trace →</button>
+    </div>
+    <div id="chain-result" class="chain-visual">
+      <span style="color:var(--muted);font-family:var(--mono);font-size:12px">Enter names above and click Trace</span>
+    </div>
+    <div id="chain-events" style="margin-top:16px"></div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div id="tab-timeline" class="tab-panel">
+    <div class="section-header"><span class="section-title">Contact Event Timeline</span></div>
+    <div id="timeline-wrap" class="table-wrap"></div>
+  </div>
+
+  <!-- GRAPH -->
+  <div id="tab-graph" class="tab-panel">
+    <div class="section-header">
+      <span class="section-title">Live Contact Network</span>
+      <button class="btn" onclick="loadGraph()">Refresh</button>
+    </div>
+    <div id="graph-canvas"></div>
+    <div class="graph-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#e63946"></div>Infected</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2a9d8f"></div>Recovered</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#555570"></div>Not Infected</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e63946;opacity:0.4"></div>High-risk contact</div>
+    </div>
+    <p style="color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:12px">
+      ⓘ Circles = people · Lines = contact events · Red = infected · Drag to explore
+    </p>
+  </div>
+
+  <!-- SEARCH -->
+  <div id="tab-search" class="tab-panel">
+    <div class="section-header"><span class="section-title">Search Person</span></div>
+    <div class="search-wrap">
+      <input class="search-input" id="search-input" type="text" placeholder="Type a name..."/>
+      <button class="btn" onclick="doSearch()">Search</button>
+    </div>
+    <div id="search-results"></div>
+  </div>
+
+</main>
+
+<script>
+const API = 'http://localhost:5000';
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'graph') loadGraph();
+}
+
+// ── Fetch helpers ────────────────────────────────────────────────────────────
+async function apiFetch(path) {
+  const r = await fetch(API + path);
+  if (!r.ok) throw new Error('API error');
+  return r.json();
+}
+
+function riskBadge(r) {
+  const map = {High:'badge-red',Critical:'badge-red',Medium:'badge-orange',Low:'badge-yellow'};
+  return `<span class="badge ${map[r]||'badge-gray'}">${r}</span>`;
+}
+function countryBadge(c) {
+  const map = {DRC:'badge-red',Uganda:'badge-orange',Rwanda:'badge-green',Kenya:'badge-blue',Border:'badge-yellow'};
+  return `<span class="badge ${map[c]||'badge-gray'}">${c}</span>`;
+}
+function statusBadge(p) {
+  if (p.deceased)  return `<span class="badge badge-gray">Deceased</span>`;
+  if (p.recovered) return `<span class="badge badge-green">Recovered</span>`;
+  if (p.infected)  return `<span class="badge badge-red">Infected</span>`;
+  return `<span class="badge badge-blue">Healthy</span>`;
+}
+
+// ── Dashboard ────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const stats = await apiFetch('/stats');
+    document.getElementById('api-status').textContent = 'LIVE — Neo4j Connected';
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card red">   <div class="stat-value">${stats.infected}</div>    <div class="stat-label">Infected</div></div>
+      <div class="stat-card gray" style="--c:#555"><div class="stat-value" style="color:#6b6b85">${stats.deceased}</div><div class="stat-label">Deceased</div></div>
+      <div class="stat-card green"> <div class="stat-value">${stats.recovered}</div>   <div class="stat-label">Recovered</div></div>
+      <div class="stat-card orange"><div class="stat-value">${stats.at_risk}</div>      <div class="stat-label">At Risk (2°)</div></div>
+      <div class="stat-card yellow"><div class="stat-value">${stats.quarantined}</div>  <div class="stat-label">Quarantined</div></div>
+      <div class="stat-card blue">  <div class="stat-value">${stats.countries_affected}</div><div class="stat-label">Countries</div></div>
+      <div class="stat-card purple"><div class="stat-value">${stats.total}</div>        <div class="stat-label">Tracked People</div></div>
+    `;
+
+    const ss = await apiFetch('/super-spreaders');
+    document.getElementById('super-spreaders-wrap').innerHTML = ss.length ? `
+      <table><thead><tr>
+        <th>Name</th><th>City</th><th>Country</th><th>Role</th><th>Contacts</th>
+      </tr></thead><tbody>
+      ${ss.map(p=>`<tr>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.city}</td>
+        <td>${countryBadge(p.country)}</td>
+        <td><span style="color:var(--muted)">${p.role}</span></td>
+        <td><span style="color:var(--red);font-family:var(--mono);font-weight:700">${p.contact_count}</span></td>
+      </tr>`).join('')}
+      </tbody></table>` : '<div class="empty">No super spreaders found</div>';
+
+    const hr = await apiFetch('/high-risk-events');
+    document.getElementById('high-risk-wrap').innerHTML = hr.length ? `
+      <table><thead><tr>
+        <th>Date</th><th>Infected Person</th><th>Exposed</th><th>Location</th><th>Country</th><th>Status</th>
+      </tr></thead><tbody>
+      ${hr.map(e=>`<tr>
+        <td style="font-family:var(--mono);font-size:11px">${e.date}</td>
+        <td><strong style="color:var(--red)">${e.infected_person}</strong></td>
+        <td>${e.exposed_person}</td>
+        <td style="color:var(--muted);font-size:12px">${e.location}</td>
+        <td>${countryBadge(e.country)}</td>
+        <td>${e.also_infected ? '<span class="badge badge-red">Infected</span>' : '<span class="badge badge-yellow">Exposed</span>'}</td>
+      </tr>`).join('')}
+      </tbody></table>` : '<div class="empty">No high-risk events</div>';
+
+  } catch(e) {
+    document.getElementById('api-status').textContent = 'API Offline — Start Flask server';
+    document.getElementById('stats-grid').innerHTML = `
+      <div style="grid-column:1/-1;padding:40px;text-align:center;font-family:var(--mono);color:var(--muted)">
+        ⚠️ Cannot connect to Flask API at ${API}<br><br>
+        <code style="color:var(--orange)">cd backend && python app.py</code>
+      </div>`;
+  }
+}
+
+// ── Infected table ───────────────────────────────────────────────────────────
+async function loadInfected() {
+  try {
+    const data = await apiFetch('/infected');
+    document.getElementById('infected-wrap').innerHTML = `
+      <table><thead><tr>
+        <th>Name</th><th>Age</th><th>Role</th><th>City</th><th>Country</th><th>Status</th><th>Contacts</th>
+      </tr></thead><tbody>
+      ${data.map(p=>`<tr>
+        <td><strong>${p.name}</strong></td>
+        <td style="font-family:var(--mono)">${p.age}</td>
+        <td style="color:var(--muted)">${p.role}</td>
+        <td>${p.city}</td>
+        <td>${countryBadge(p.country)}</td>
+        <td>${statusBadge(p)}</td>
+        <td style="font-family:var(--mono);color:var(--orange)">${p.total_contacts}</td>
+      </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { document.getElementById('infected-wrap').innerHTML = '<div class="empty">Load the API first</div>'; }
+}
+
+// ── At risk ──────────────────────────────────────────────────────────────────
+async function loadAtRisk(deg=2) {
+  document.getElementById('atrisk-wrap').innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+  try {
+    const data = await apiFetch(`/at-risk?degrees=${deg}`);
+    document.getElementById('atrisk-wrap').innerHTML = `
+      <table><thead><tr>
+        <th>Name</th><th>Age</th><th>Role</th><th>City</th><th>Country</th><th>Exposure Count</th><th>Risk Level</th>
+      </tr></thead><tbody>
+      ${data.map(p=>`<tr>
+        <td><strong>${p.name}</strong></td>
+        <td style="font-family:var(--mono)">${p.age}</td>
+        <td style="color:var(--muted)">${p.role}</td>
+        <td>${p.city}</td>
+        <td>${countryBadge(p.country)}</td>
+        <td style="font-family:var(--mono);color:var(--orange)">${p.exposure_count}</td>
+        <td>${riskBadge(p.risk_level)}</td>
+      </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { document.getElementById('atrisk-wrap').innerHTML = '<div class="empty">Load the API first</div>'; }
+}
+
+// ── Countries ────────────────────────────────────────────────────────────────
+async function loadCountries() {
+  try {
+    const countries = await apiFetch('/spread/country');
+    const colors = {DRC:'#e63946',Uganda:'#f4a261',Rwanda:'#2a9d8f',Kenya:'#457b9d'};
+    document.getElementById('country-grid').innerHTML = countries.map(c => {
+      const rate = c.total_people > 0 ? Math.round(c.infected/c.total_people*100) : 0;
+      const col = colors[c.country]||'#6b6b85';
+      return `<div class="country-card">
+        <div class="country-header">
+          <span class="country-name">${c.country}</span>
+          <span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${rate}% infection rate</span>
+        </div>
+        <div class="country-stats">
+          <div class="country-stat"><span>Total Tracked</span><strong>${c.total_people}</strong></div>
+          <div class="country-stat"><span>Infected</span><strong style="color:${col}">${c.infected}</strong></div>
+          <div class="country-stat"><span>Deceased</span><strong style="color:var(--muted)">${c.deceased}</strong></div>
+          <div class="country-stat"><span>Recovered</span><strong style="color:var(--green)">${c.recovered}</strong></div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${rate}%;background:${col}"></div></div>
+      </div>`;
+    }).join('');
+
+    const cities = await apiFetch('/spread/city');
+    document.getElementById('city-wrap').innerHTML = `
+      <table><thead><tr><th>City</th><th>Country</th><th>Total</th><th>Infected</th><th>Deceased</th></tr></thead><tbody>
+      ${cities.map(c=>`<tr>
+        <td><strong>${c.city}</strong></td>
+        <td>${countryBadge(c.country)}</td>
+        <td style="font-family:var(--mono)">${c.total_people}</td>
+        <td style="font-family:var(--mono);color:${c.infected>0?'var(--red)':'var(--muted)'}">${c.infected}</td>
+        <td style="font-family:var(--mono);color:var(--muted)">${c.deceased}</td>
+      </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) {}
+}
+
+// ── Chain ────────────────────────────────────────────────────────────────────
+async function loadChain() {
+  const from = document.getElementById('chain-from').value.trim();
+  const to   = document.getElementById('chain-to').value.trim();
+  if (!from || !to) return;
+  document.getElementById('chain-result').innerHTML = '<div class="loading"><div class="spinner"></div>Tracing...</div>';
+  try {
+    const data = await apiFetch(`/chain?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+    if (!data.chain || data.chain.length === 0) {
+      document.getElementById('chain-result').innerHTML = '<span style="color:var(--muted);font-family:var(--mono);font-size:12px">No connection found between these two people</span>';
+      document.getElementById('chain-events').innerHTML = '';
+      return;
+    }
+    const nodes = data.chain.map((node, i) => {
+      const isInfected = node.infected;
+      return `<div class="chain-node ${isInfected?'infected':''}">
+        <div class="chain-node-name">${node.name}</div>
+        <div class="chain-node-info">${node.city} · ${node.country}</div>
+      </div>${i < data.chain.length-1 ? '<div class="chain-arrow">→</div>' : ''}`;
+    }).join('');
+    document.getElementById('chain-result').innerHTML = nodes;
+
+    if (data.events && data.events.length > 0) {
+      document.getElementById('chain-events').innerHTML = `
+        <div class="table-wrap"><table><thead><tr>
+          <th>Step</th><th>Date</th><th>Location</th><th>Risk</th>
+        </tr></thead><tbody>
+        ${data.events.map((e,i)=>`<tr>
+          <td style="font-family:var(--mono);color:var(--muted)">${i+1}</td>
+          <td style="font-family:var(--mono)">${e.date||'—'}</td>
+          <td>${e.location||'—'}</td>
+          <td>${riskBadge(e.risk||'Unknown')}</td>
+        </tr>`).join('')}
+        </tbody></table></div>
+        <p style="margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--muted)">
+          ${data.hops} hop${data.hops!==1?'s':''} from <strong style="color:var(--text)">${from}</strong> to <strong style="color:var(--text)">${to}</strong>
+        </p>`;
+    }
+  } catch(e) { document.getElementById('chain-result').innerHTML = '<span style="color:var(--muted)">Error — is the API running?</span>'; }
+}
+
+// ── Timeline ─────────────────────────────────────────────────────────────────
+async function loadTimeline() {
+  try {
+    const data = await apiFetch('/timeline');
+    document.getElementById('timeline-wrap').innerHTML = `
+      <table><thead><tr>
+        <th>Date</th><th>Person A</th><th>Person B</th><th>Location</th><th>Country</th><th>Risk</th>
+      </tr></thead><tbody>
+      ${data.map(e=>`<tr>
+        <td style="font-family:var(--mono);font-size:11px">${e.date}</td>
+        <td><span class="${e.a_infected?'badge badge-red':''}">${e.person_a}</span></td>
+        <td><span class="${e.b_infected?'badge badge-red':''}">${e.person_b}</span></td>
+        <td style="color:var(--muted);font-size:12px">${e.location}</td>
+        <td>${countryBadge(e.country)}</td>
+        <td>${riskBadge(e.risk)}</td>
+      </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) {}
+}
+
+// ── Graph ────────────────────────────────────────────────────────────────────
+async function loadGraph() {
+  document.getElementById('graph-canvas').innerHTML = '<div class="loading"><div class="spinner"></div>Building network graph...</div>';
+  try {
+    const data = await apiFetch('/graph');
+    renderGraph(data.nodes, data.edges);
+  } catch(e) {
+    document.getElementById('graph-canvas').innerHTML = '<div class="empty">Start the Flask API to see the live graph</div>';
+  }
+}
+
+function renderGraph(nodes, edges) {
+  const W = document.getElementById('graph-canvas').offsetWidth;
+  const H = 600;
+
+  // Simple force-directed layout simulation
+  const pos = {};
+  nodes.forEach((n, i) => {
+    const angle = (i / nodes.length) * 2 * Math.PI;
+    const r = 200 + Math.random() * 80;
+    pos[n.id] = { x: W/2 + r * Math.cos(angle), y: H/2 + r * Math.sin(angle), vx:0, vy:0 };
+  });
+
+  // Simple iteration
+  for (let iter = 0; iter < 80; iter++) {
+    // Repulsion
+    for (let i = 0; i < nodes.length; i++)
+      for (let j = i+1; j < nodes.length; j++) {
+        const dx = pos[nodes[i].id].x - pos[nodes[j].id].x;
+        const dy = pos[nodes[i].id].y - pos[nodes[j].id].y;
+        const d = Math.sqrt(dx*dx+dy*dy)||1;
+        const f = 1200/(d*d);
+        pos[nodes[i].id].vx += dx/d*f; pos[nodes[i].id].vy += dy/d*f;
+        pos[nodes[j].id].vx -= dx/d*f; pos[nodes[j].id].vy -= dy/d*f;
+      }
+    // Attraction
+    edges.forEach(e => {
+      if (!pos[e.source]||!pos[e.target]) return;
+      const dx = pos[e.target].x - pos[e.source].x;
+      const dy = pos[e.target].y - pos[e.source].y;
+      const d = Math.sqrt(dx*dx+dy*dy)||1;
+      const f = d/120;
+      pos[e.source].vx += dx/d*f; pos[e.source].vy += dy/d*f;
+      pos[e.target].vx -= dx/d*f; pos[e.target].vy -= dy/d*f;
+    });
+    // Center gravity
+    nodes.forEach(n => {
+      pos[n.id].vx += (W/2 - pos[n.id].x) * 0.01;
+      pos[n.id].vy += (H/2 - pos[n.id].y) * 0.01;
+      pos[n.id].x += pos[n.id].vx * 0.3; pos[n.id].y += pos[n.id].vy * 0.3;
+      pos[n.id].vx *= 0.7; pos[n.id].vy *= 0.7;
+      pos[n.id].x = Math.max(30, Math.min(W-30, pos[n.id].x));
+      pos[n.id].y = Math.max(30, Math.min(H-30, pos[n.id].y));
+    });
+  }
+
+  const nodeColor = n => n.deceased?'#444':n.recovered?'#2a9d8f':n.infected?'#e63946':'#2d2d4a';
+  const nodeStroke = n => n.infected||n.deceased?'#e63946':n.recovered?'#2a9d8f':'#3a3a5c';
+  const edgeColor = e => e.risk==='High'?'rgba(230,57,70,0.35)':e.risk==='Medium'?'rgba(244,162,97,0.2)':'rgba(107,107,133,0.12)';
+
+  const edgesHTML = edges.filter(e=>pos[e.source]&&pos[e.target]).map(e =>
+    `<line x1="${pos[e.source].x}" y1="${pos[e.source].y}" x2="${pos[e.target].x}" y2="${pos[e.target].y}" stroke="${edgeColor(e)}" stroke-width="${e.risk==='High'?2:1}"/>`
+  ).join('');
+
+  const nodesHTML = nodes.map(n => {
+    const p = pos[n.id]; if (!p) return '';
+    const r = n.infected ? 9 : 7;
+    return `<g class="gnode" transform="translate(${p.x},${p.y})">
+      <circle r="${r}" fill="${nodeColor(n)}" stroke="${nodeStroke(n)}" stroke-width="1.5"/>
+      ${n.infected ? `<circle r="${r+4}" fill="none" stroke="${nodeStroke(n)}" stroke-width="1" opacity="0.4"/>` : ''}
+      <title>${n.name}\n${n.role} · ${n.city}, ${n.country}${n.infected?' · INFECTED':''}</title>
+    </g>`;
+  }).join('');
+
+  document.getElementById('graph-canvas').innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <g>${edgesHTML}</g>
+      <g>${nodesHTML}</g>
+    </svg>`;
+}
+
+// ── Search ───────────────────────────────────────────────────────────────────
+async function doSearch() {
+  const name = document.getElementById('search-input').value.trim();
+  if (!name) return;
+  document.getElementById('search-results').innerHTML = '<div class="loading"><div class="spinner"></div>Searching...</div>';
+  try {
+    const data = await apiFetch(`/search?name=${encodeURIComponent(name)}`);
+    document.getElementById('search-results').innerHTML = data.length ? `
+      <div class="table-wrap"><table><thead><tr>
+        <th>Name</th><th>Age</th><th>Gender</th><th>Role</th><th>City</th><th>Country</th><th>Status</th><th>Contacts</th>
+      </tr></thead><tbody>
+      ${data.map(p=>`<tr>
+        <td><strong>${p.name}</strong></td>
+        <td style="font-family:var(--mono)">${p.age}</td>
+        <td>${p.gender==='F'?'♀ Female':'♂ Male'}</td>
+        <td style="color:var(--muted)">${p.role}</td>
+        <td>${p.city}</td>
+        <td>${countryBadge(p.country)}</td>
+        <td>${statusBadge(p)}</td>
+        <td style="font-family:var(--mono)">${p.total_contacts}</td>
+      </tr>`).join('')}
+      </tbody></table></div>` : '<div class="empty">No results found</div>';
+  } catch(e) {}
+}
+
+document.getElementById('search-input').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadDashboard();
+loadInfected();
+loadAtRisk(2);
+loadCountries();
+loadTimeline();
+</script>
+</body>
+</html>
