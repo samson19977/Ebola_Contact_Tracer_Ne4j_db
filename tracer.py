@@ -8,10 +8,20 @@ import os
 
 load_dotenv()
 
-driver = GraphDatabase.driver(
-    os.getenv("NEO4J_URI"),
-    auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
-)
+_uri  = os.getenv("NEO4J_URI")
+_user = os.getenv("NEO4J_USERNAME")
+_pass = os.getenv("NEO4J_PASSWORD")
+
+if not _uri or not _user or not _pass:
+    missing = [k for k, v in {
+        "NEO4J_URI": _uri, "NEO4J_USERNAME": _user, "NEO4J_PASSWORD": _pass
+    }.items() if not v]
+    raise EnvironmentError(
+        f"Missing required environment variables: {', '.join(missing)}. "
+        "Set them in your deployment platform's environment settings."
+    )
+
+driver = GraphDatabase.driver(_uri, auth=(_user, _pass))
 DATABASE = os.getenv("NEO4J_DATABASE", "neo4j")
 
 
